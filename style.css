@@ -60,7 +60,7 @@ body {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
-    box-shadow: 0 0 40px rgba(94, 23, 235, 0.1), var(--glass-shadow);
+    box-shadow: 0 0 20px rgba(94, 23, 235, 0.12), var(--glass-shadow);
     border-radius: 16px;
 }
 

@@ -506,10 +506,11 @@ function renderRanking() {
     const stats = {};
     filteredData.forEach(d => {
         const t = d.transportadora || 'N/A';
-        if(!stats[t]) stats[t] = { total: 0, atraso: 0, semPrazo: 0 };
+        if(!stats[t]) stats[t] = { total: 0, atraso: 0, semPrazo: 0, noPrazo: 0 };
         stats[t].total++;
         if (d.situacao === 'Atrasado') stats[t].atraso++;
-        if (d.situacao === 'Sem prazo') stats[t].semPrazo++;
+        else if (d.situacao === 'Sem prazo') stats[t].semPrazo++;
+        else if (d.situacao === 'No prazo') stats[t].noPrazo++;
     });
 
     const ranking = Object.entries(stats).map(([name, data]) => {
@@ -528,6 +529,7 @@ function renderRanking() {
         tr.innerHTML = `
             <td>${r.name}</td>
             <td>${r.total}</td>
+            <td>${r.noPrazo}</td>
             <td>${r.atraso}</td>
             <td>${r.semPrazo}</td>
             <td>${r.percAtraso.toFixed(1)}%</td>
