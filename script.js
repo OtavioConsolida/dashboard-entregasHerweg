@@ -821,15 +821,15 @@ if (btnGenerateEmail) {
             <!-- Cabeçalho -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius: 8px 8px 0 0;">
                 <tr>
-                    <td bgcolor="#5E17EB" style="background-color: #5E17EB; padding: 25px 30px; border-radius: 8px 8px 0 0;">
-                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <td bgcolor="#5E17EB" style="background-color: #5E17EB; padding: 25px 30px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#5E17EB" style="background-color: #5E17EB;">
                             <tr>
-                                <td style="color: #fffffe;">
-                                    <div style="margin: 0; font-size: 22px; font-weight: 700; color: #fffffe !important;">
-                                        <span style="color: #fffffe;"><font color="#fffffe">Consolida — Relatório de Performance</font></span>
+                                <td bgcolor="#5E17EB" style="background-color: #5E17EB; color: white;">
+                                    <div style="margin: 0; font-size: 22px; font-weight: 700; color: white !important;">
+                                        <span style="color: white;"><font color="white">Consolida — Relatório de Performance</font></span>
                                     </div>
-                                    <div style="margin: 5px 0 0 0; font-size: 14px; color: #fffffe !important;">
-                                        <span style="color: #fffffe;"><font color="#fffffe">Farol de entregas por status — ${transp}</font></span>
+                                    <div style="margin: 5px 0 0 0; font-size: 14px; color: white !important;">
+                                        <span style="color: white;"><font color="white">Farol de entregas por status — ${transp}</font></span>
                                     </div>
                                 </td>
                                 <td align="right" width="160">
