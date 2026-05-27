@@ -5,13 +5,14 @@ const firebaseConfig = {
   projectId: "dashboard-eo",
   storageBucket: "dashboard-eo.firebasestorage.app",
   messagingSenderId: "572483276607",
-  appId: "1:572483276607:web:75375e0b3a8992911b8d8a"
+  appId: "1:572483276607:web:75375e0b3a8992911b8d8a",
+  databaseURL: "https://dashboard-eo-default-rtdb.firebaseio.com/" 
 };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const storage = firebase.storage();
+const db = firebase.database(); // Agora usamos Realtime Database!
 
 // Global State
 let rawData = [];
@@ -31,7 +32,7 @@ const applyFiltersBtn = document.getElementById('applyFiltersBtn');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const exportBtn = document.getElementById('exportBtn');
 
-// Helper para parse de data DD-MM-YYYY HH:mm:ss ou YYYY-MM-DD
+// Helper para parse de data
 function parseDateBR(dateStr) {
     if(!dateStr) return null;
     if (dateStr instanceof Date) return dateStr;
@@ -101,50 +102,63 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     auth.signOut();
 });
 
-// Load Initial Data from Storage
+// Load Initial Data from Database (SUPER RÁPIDO)
 window.addEventListener('load', () => {
-    storage.ref('registros.xlsx').getDownloadURL()
-        .then(url => fetch(url))
-        .then(res => res.blob())
-        .then(blob => {
-            const reader = new FileReader();
-            reader.onload = (evt) => parseExcelData(evt.target.result);
-            reader.readAsBinaryString(blob);
+    db.ref('relatorio_consolida').once('value')
+        .then(snapshot => {
+            const data = snapshot.val();
+            if (data) {
+                originalJsonData = data;
+                processDataEngine(); // Processa direto sem precisar converter Excel!
+            } else {
+                console.log("Banco de dados vazio.");
+            }
         })
         .catch(err => {
-            console.log("Nenhum arquivo encontrado no Firebase ainda.");
+            console.error("Erro ao puxar dados do banco.", err);
         });
 });
 
-// Upload Excel
+// Upload Excel -> Converter para JSON -> Salvar no Banco
 excelUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const btnLabel = document.querySelector('label[for="excelUpload"]');
     const oldText = btnLabel.textContent;
-    btnLabel.textContent = "Enviando pra Nuvem...";
+    btnLabel.textContent = "Lendo Excel...";
     
-    storage.ref('registros.xlsx').put(file).then(() => {
-        btnLabel.textContent = oldText;
-        alert("Planilha sincronizada na Nuvem com sucesso!");
-        
-        const reader = new FileReader();
-        reader.onload = (evt) => parseExcelData(evt.target.result);
-        reader.readAsBinaryString(file);
-    }).catch(err => {
-        btnLabel.textContent = oldText;
-        alert("Erro no upload: Você tem permissão no Firebase Rules?");
-        console.error(err);
-    });
+    // Leitura Local com SheetJS
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        try {
+            const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+            const firstSheet = workbook.SheetNames[0];
+            originalJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { raw: false, defval: "" });
+            
+            // Envia o JSON puro para o banco
+            btnLabel.textContent = "Salvando na Nuvem...";
+            db.ref('relatorio_consolida').set(originalJsonData)
+                .then(() => {
+                    btnLabel.textContent = oldText;
+                    alert("Dados salvos e atualizados para todos com sucesso!");
+                    processDataEngine();
+                })
+                .catch(err => {
+                    btnLabel.textContent = oldText;
+                    alert("Erro no banco de dados. Você configurou as Rules?");
+                    console.error(err);
+                });
+        } catch (error) {
+            btnLabel.textContent = oldText;
+            alert("Erro ao ler planilha: " + error.message);
+        }
+    };
+    reader.readAsBinaryString(file);
 });
 
-function parseExcelData(binaryData) {
-    const workbook = XLSX.read(binaryData, { type: 'binary' });
-    const firstSheet = workbook.SheetNames[0];
-    
-    originalJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { raw: false, defval: "" });
-    
+// Processa o JSON original e alimenta os gráficos
+function processDataEngine() {
     rawData = originalJsonData.map((row, index) => {
         const getValFuzzy = (searchStr) => {
             const searchLower = searchStr.toLowerCase();
