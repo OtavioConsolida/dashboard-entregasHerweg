@@ -204,9 +204,23 @@ function processDataEngine() {
     if (!originalJsonData || originalJsonData.length < 2) return;
 
     // A linha 0 sempre contém os cabeçalhos exatos originais.
-    const headers = originalJsonData[0].map(h => String(h).toLowerCase());
+    const headers = originalJsonData[0].map(h => String(h).toLowerCase().trim());
 
-    const getIdx = (searchStr) => headers.findIndex(h => h.includes(searchStr.toLowerCase()));
+    const getIdx = (searchStr, excludeWords = []) => {
+        const lowerSearch = searchStr.toLowerCase();
+        // 1. Tenta correspondência exata
+        const exact = headers.findIndex(h => h === lowerSearch);
+        if (exact !== -1) return exact;
+        
+        // 2. Tenta includes, ignorando exclusões
+        return headers.findIndex(h => {
+            if (!h.includes(lowerSearch)) return false;
+            for (let word of excludeWords) {
+                if (h.includes(word)) return false;
+            }
+            return true;
+        });
+    };
 
     const idxPrazo = getIdx('prazo entrega');
     const idxSitOriginal = getIdx('situa') !== -1 ? getIdx('situa') : getIdx('status');
@@ -215,7 +229,12 @@ function processDataEngine() {
     const idxDestino = getIdx('destino') !== -1 ? getIdx('destino') : getIdx('cidade');
     const idxUf = getIdx('uf');
     const idxTransp = getIdx('transportadora') !== -1 ? getIdx('transportadora') : getIdx('transp');
-    const idxCte = getIdx('ct-e') !== -1 ? getIdx('ct-e') : (getIdx('doc.frete') !== -1 ? getIdx('doc.frete') : getIdx('frete'));
+    
+    // Para CT-e, prioriza exato. Se for por includes, não pode ter 'série' nem 'serie' no nome
+    let idxCte = getIdx('ct-e', ['série', 'serie']);
+    if (idxCte === -1) idxCte = getIdx('doc.frete');
+    if (idxCte === -1) idxCte = getIdx('frete');
+    
     const idxSerieCte = getIdx('série ct-e') !== -1 ? getIdx('série ct-e') : getIdx('serie');
     const idxEntrega = getIdx('data entrega') !== -1 ? getIdx('data entrega') : getIdx('entrega');
 
