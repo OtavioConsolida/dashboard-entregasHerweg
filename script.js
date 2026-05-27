@@ -51,14 +51,20 @@ function parseDateBR(dateStr) {
 
 function resolveStatusLogico(prazoStr, situacaoOriginal) {
     const sitLower = situacaoOriginal ? String(situacaoOriginal).toLowerCase() : '';
-    if (!prazoStr || sitLower.includes('sem previs') || sitLower.includes('sem info')) return 'Sem prazo';
+    
+    const prazoDt = parseDateBR(prazoStr);
+    
+    // Se não há uma data de prazo válida, aí sim é sem prazo.
+    if (!prazoDt || isNaN(prazoDt)) return 'Sem prazo';
+
+    // Se existe prazo, avalia se já atrasou ou não, ignorando os textos genéricos do Lincros como "Sem informação"
     if (sitLower.includes('entregue fora do prazo') || sitLower.includes('atras')) return 'Atrasado';
     if (sitLower === 'no prazo') return 'No prazo';
 
-    const prazoDt = parseDateBR(prazoStr);
     const hoje = new Date();
-    if(prazoDt) prazoDt.setHours(0,0,0,0);
+    prazoDt.setHours(0,0,0,0);
     hoje.setHours(0,0,0,0);
+    
     if (prazoDt < hoje) return 'Atrasado'; 
     else return 'No prazo'; 
 }
