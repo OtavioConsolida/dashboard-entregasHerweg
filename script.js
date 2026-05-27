@@ -95,12 +95,16 @@ auth.onAuthStateChanged(user => {
         appContainer.classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
         
+        const mainTabsContainer = document.getElementById('mainTabsContainer');
+        
         if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
             uploadContainer.classList.remove('hidden');
             adminReportsSection.classList.remove('hidden');
+            if (mainTabsContainer) mainTabsContainer.classList.remove('hidden');
         } else {
             uploadContainer.classList.add('hidden');
             adminReportsSection.classList.add('hidden');
+            if (mainTabsContainer) mainTabsContainer.classList.add('hidden');
         }
         
         loadDataFromRTDB();
