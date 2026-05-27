@@ -973,10 +973,6 @@ if (btnGenerateEmail) {
                     </tr>
                 </table>
 
-                <div style="margin-top: 35px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; background-color: #ffffff;">
-                    <p style="margin: 0; color: #4a5568; font-size: 14px;">Atenciosamente,</p>
-                    <p style="margin: 5px 0; color: #1a202c; font-weight: 600; font-size: 15px;">Equipe Consolida</p>
-                </div>
             </div>
         </div>
         `;
@@ -1004,7 +1000,7 @@ if (btnCopyAndOpen) {
             window.location.href = `mailto:${destinatarios}?subject=${assunto}`;
             
             const oldText = btnCopyAndOpen.textContent;
-            btnCopyAndOpen.textContent = "Copiado! Abra seu Outlook e cole (Ctrl+V)";
+            btnCopyAndOpen.textContent = "Copiado! No Outlook: Ctrl+A → Ctrl+V";
             setTimeout(() => { btnCopyAndOpen.textContent = oldText; }, 5000);
             
         } catch (err) {
