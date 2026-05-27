@@ -17,7 +17,7 @@ const db = firebase.database();
 // Global State
 let rawData = [];
 let filteredData = [];
-let originalJsonData = []; 
+let originalJsonData = []; // Agora será um Array de Arrays (Tabela Pura)
 let charts = {};
 
 // DOM Elements
@@ -46,7 +46,7 @@ function parseDateBR(dateStr) {
 }
 
 function resolveStatusLogico(prazoStr, situacaoOriginal) {
-    const sitLower = situacaoOriginal ? situacaoOriginal.toLowerCase() : '';
+    const sitLower = situacaoOriginal ? String(situacaoOriginal).toLowerCase() : '';
     if (!prazoStr || sitLower.includes('sem previs') || sitLower.includes('sem info')) return 'Sem prazo';
     if (sitLower.includes('entregue fora do prazo') || sitLower.includes('atras')) return 'Atrasado';
     if (sitLower === 'no prazo') return 'No prazo';
@@ -67,26 +67,22 @@ themeToggleCheckbox.addEventListener('change', (e) => {
     updateChartsTheme();
 });
 
-// Auth Logic (Muralha de Login & RBAC)
+// Auth Logic
 auth.onAuthStateChanged(user => {
     if(user) {
-        // Logado: esconde muralha, mostra painel
         loginWall.classList.add('hidden');
         appContainer.classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
         
-        // RBAC: Se for o Otávio, mostra botão de upload. Se não, esconde.
         if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
             uploadContainer.classList.remove('hidden');
         } else {
             uploadContainer.classList.add('hidden');
         }
         
-        // Só carrega os dados depois de logar (porque a Rule bloqueia anônimos)
         loadDataFromRTDB();
 
     } else {
-        // Deslogado: mostra muralha, esconde painel
         loginWall.classList.remove('hidden');
         appContainer.classList.add('hidden');
     }
@@ -115,11 +111,11 @@ function loadDataFromRTDB() {
     db.ref('relatorio_consolida').once('value')
         .then(snapshot => {
             const data = snapshot.val();
-            if (data) {
+            if (data && Array.isArray(data) && data.length > 0) {
                 originalJsonData = data;
                 processDataEngine(); 
             } else {
-                console.log("Banco de dados vazio.");
+                console.log("Banco de dados vazio ou formato inválido.");
             }
         })
         .catch(err => {
@@ -127,7 +123,7 @@ function loadDataFromRTDB() {
         });
 }
 
-// Upload Excel -> Higienizar Keys -> Salvar no Banco
+// Upload Excel -> Converter para Array of Arrays (AoA) -> Salvar
 excelUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -141,25 +137,27 @@ excelUpload.addEventListener('change', (e) => {
         try {
             const workbook = XLSX.read(evt.target.result, { type: 'binary' });
             const firstSheet = workbook.SheetNames[0];
-            const rawExcelData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { raw: false, defval: "" });
             
-            // SANITIZAÇÃO DE CHAVES (Remover . # $ [ ] que o Firebase odeia)
-            const sanitizedData = rawExcelData.map(row => {
-                const newRow = {};
-                for(let key in row) {
-                    const safeKey = key.replace(/[.#$\[\]]/g, '_');
-                    newRow[safeKey] = row[key];
-                }
-                return newRow;
-            });
+            // Aqui é a mágica de fidelidade: lemos como matriz (Array de Arrays)
+            // { header: 1 } retorna [ [col1, col2, col3], [val1, val2, val3], ... ]
+            const rawAoA = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1, defval: "" });
+            
+            // Filtramos linhas vazias que o Excel as vezes cria
+            const cleanedAoA = rawAoA.filter(row => row && row.length > 0 && row.some(cell => String(cell).trim() !== ""));
 
-            originalJsonData = sanitizedData;
+            if (cleanedAoA.length < 2) {
+                alert("A planilha parece estar vazia ou sem cabeçalho.");
+                btnLabel.textContent = oldText;
+                return;
+            }
+
+            originalJsonData = cleanedAoA;
             
             btnLabel.textContent = "Salvando na Nuvem...";
             db.ref('relatorio_consolida').set(originalJsonData)
                 .then(() => {
                     btnLabel.textContent = oldText;
-                    alert("Dados salvos! Os clientes já podem ver o gráfico atualizado.");
+                    alert("Dados salvos e prontos! A exportação será 100% idêntica ao original.");
                     processDataEngine();
                 })
                 .catch(err => {
@@ -174,35 +172,50 @@ excelUpload.addEventListener('change', (e) => {
     reader.readAsBinaryString(file);
 });
 
-// Processa o JSON original e alimenta os gráficos
+// Processa a Matriz (AoA) e alimenta os gráficos
 function processDataEngine() {
-    rawData = originalJsonData.map((row, index) => {
-        const getValFuzzy = (searchStr) => {
-            const searchLower = searchStr.toLowerCase();
-            for(let key in row) {
-                if(key.toLowerCase().includes(searchLower)) return row[key];
-            }
-            return null;
-        };
+    if (!originalJsonData || originalJsonData.length < 2) return;
 
-        const prazoStr = getValFuzzy('prazo entrega');
-        const sitOriginal = getValFuzzy('situa') || getValFuzzy('status') || '';
+    // A linha 0 sempre contém os cabeçalhos exatos originais.
+    const headers = originalJsonData[0].map(h => String(h).toLowerCase());
+
+    const getIdx = (searchStr) => headers.findIndex(h => h.includes(searchStr.toLowerCase()));
+
+    const idxPrazo = getIdx('prazo entrega');
+    const idxSitOriginal = getIdx('situa') !== -1 ? getIdx('situa') : getIdx('status');
+    const idxNfe = getIdx('nf-e') !== -1 ? getIdx('nf-e') : getIdx('nota');
+    const idxEmissao = getIdx('emiss');
+    const idxDestino = getIdx('destino') !== -1 ? getIdx('destino') : getIdx('cidade');
+    const idxUf = getIdx('uf');
+    const idxTransp = getIdx('transportadora') !== -1 ? getIdx('transportadora') : getIdx('transp');
+    const idxCte = getIdx('ct-e') !== -1 ? getIdx('ct-e') : (getIdx('doc.frete') !== -1 ? getIdx('doc.frete') : getIdx('frete'));
+    const idxSerieCte = getIdx('série ct-e') !== -1 ? getIdx('série ct-e') : getIdx('serie');
+
+    rawData = [];
+    
+    // Começa do índice 1 (pula o cabeçalho)
+    for (let i = 1; i < originalJsonData.length; i++) {
+        const row = originalJsonData[i];
+        if (!row || row.length === 0) continue;
+
+        const prazoStr = idxPrazo !== -1 ? row[idxPrazo] : null;
+        const sitOriginal = idxSitOriginal !== -1 ? row[idxSitOriginal] : '';
         const situacaoReal = resolveStatusLogico(prazoStr, sitOriginal);
 
-        return {
-            _originalIndex: index,
-            nfe: getValFuzzy('nf-e') || getValFuzzy('nota'),
-            emissao: getValFuzzy('emiss'),
-            destino: getValFuzzy('destino') || getValFuzzy('cidade'),
-            uf: getValFuzzy('uf'),
-            transportadora: getValFuzzy('transportadora') || getValFuzzy('transp'),
-            docFrete: getValFuzzy('doc_frete') || getValFuzzy('ct-e') || getValFuzzy('frete'), // doc_frete sanitizado!
-            serieCte: getValFuzzy('série ct-e') || getValFuzzy('serie'),
+        rawData.push({
+            _originalIndex: i, // Guarda qual é a linha verdadeira na Matriz
+            nfe: idxNfe !== -1 ? row[idxNfe] : null,
+            emissao: idxEmissao !== -1 ? row[idxEmissao] : null,
+            destino: idxDestino !== -1 ? row[idxDestino] : null,
+            uf: idxUf !== -1 ? row[idxUf] : null,
+            transportadora: idxTransp !== -1 ? row[idxTransp] : null,
+            docFrete: idxCte !== -1 ? row[idxCte] : null,
+            serieCte: idxSerieCte !== -1 ? row[idxSerieCte] : null,
             prazoEntrega: prazoStr,
             situacaoOriginal: sitOriginal,
             situacao: situacaoReal
-        };
-    });
+        });
+    }
 
     filteredData = [...rawData];
     populateFilters();
@@ -539,10 +552,20 @@ function renderRanking() {
     });
 }
 
+// Exportação com fidelidade 100% (usando Array of Arrays)
 exportBtn.addEventListener('click', () => {
     if(filteredData.length === 0) return alert('Não há dados para exportar.');
-    const dataToExport = filteredData.map(d => originalJsonData[d._originalIndex]);
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    
+    // A linha 0 é o cabeçalho original com a exata ordem do Excel!
+    const dataToExport = [originalJsonData[0]];
+    
+    // Adiciona as linhas correspondentes aos dados filtrados
+    filteredData.forEach(d => {
+        dataToExport.push(originalJsonData[d._originalIndex]);
+    });
+    
+    // aoa_to_sheet reconstrói perfeitamente a planilha matriz
+    const ws = XLSX.utils.aoa_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Relatorio_Filtrado");
     XLSX.writeFile(wb, "relatorio_consolida.xlsx");
