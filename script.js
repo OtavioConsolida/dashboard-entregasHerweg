@@ -326,12 +326,41 @@ clearFiltersBtn.addEventListener('click', () => {
 });
 
 function updateDashboard() {
+    updateDateRange();
     updateKPIs();
     renderSLAChart();
     renderRegionsChart();
     renderBottlenecksChart();
     renderRanking();
     renderAdminReports();
+}
+
+function updateDateRange() {
+    const displayEl = document.getElementById('dateRangeDisplay');
+    if (!displayEl) return;
+    
+    if (filteredData.length === 0) {
+        displayEl.innerHTML = '<i class="fas fa-calendar-alt"></i> Sem dados de data';
+        return;
+    }
+    
+    let minDate = null;
+    let maxDate = null;
+    
+    filteredData.forEach(d => {
+        const dt = parseDateBR(d.emissao);
+        if (dt && !isNaN(dt)) {
+            if (!minDate || dt < minDate) minDate = dt;
+            if (!maxDate || dt > maxDate) maxDate = dt;
+        }
+    });
+    
+    if (minDate && maxDate) {
+        const fmt = (date) => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth()+1).padStart(2, '0')}/${date.getFullYear()}`;
+        displayEl.innerHTML = `<i class="fas fa-calendar-alt"></i> <strong>${fmt(minDate)}</strong> até <strong>${fmt(maxDate)}</strong>`;
+    } else {
+        displayEl.innerHTML = '<i class="fas fa-calendar-alt"></i> Data não disponível';
+    }
 }
 
 function updateKPIs() {

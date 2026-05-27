@@ -114,9 +114,15 @@
                             <option value="">Todos os Meses</option>
                         </select>
                     </div>
-                    <button id="applyFiltersBtn" class="btn btn-primary">Aplicar Filtros</button>
-                    <button id="clearFiltersBtn" class="btn btn-secondary">Limpar</button>
-                </div>
+                        <div class="filter-group filters-actions" style="display: flex; flex-direction: column; gap: 10px; justify-content: flex-end;">
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" id="applyFiltersBtn"><i class="fas fa-filter"></i> Filtrar</button>
+                            <button class="btn btn-secondary" id="clearFiltersBtn">Limpar</button>
+                        </div>
+                        <span id="dateRangeDisplay" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500; text-align: right;">
+                            <!-- JS fará o preenchimento: 01/05 até 27/05 -->
+                        </span>
+                    </div>
             </section>
 
             <!-- KPIs -->
