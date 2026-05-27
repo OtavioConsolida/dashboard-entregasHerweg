@@ -12,7 +12,7 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.database(); // Agora usamos Realtime Database!
+const db = firebase.database();
 
 // Global State
 let rawData = [];
@@ -23,14 +23,15 @@ let charts = {};
 // DOM Elements
 const themeToggleCheckbox = document.getElementById('themeToggleCheckbox');
 const excelUpload = document.getElementById('excelUpload');
-const adminPanel = document.getElementById('adminPanel');
-const loginBtn = document.getElementById('loginBtn');
-const loginModal = document.getElementById('loginModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
+const loginWall = document.getElementById('loginWall');
+const appContainer = document.getElementById('appContainer');
 const doLoginBtn = document.getElementById('doLoginBtn');
+const uploadContainer = document.getElementById('uploadContainer');
 const applyFiltersBtn = document.getElementById('applyFiltersBtn');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const exportBtn = document.getElementById('exportBtn');
+
+const ADMIN_EMAIL = "otavio@oconsolida.com";
 
 // Helper para parse de data
 function parseDateBR(dateStr) {
@@ -66,24 +67,31 @@ themeToggleCheckbox.addEventListener('change', (e) => {
     updateChartsTheme();
 });
 
-// Auth Logic
+// Auth Logic (Muralha de Login & RBAC)
 auth.onAuthStateChanged(user => {
     if(user) {
-        loginBtn.classList.add('hidden');
-        adminPanel.classList.remove('hidden');
+        // Logado: esconde muralha, mostra painel
+        loginWall.classList.add('hidden');
+        appContainer.classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
+        
+        // RBAC: Se for o Otávio, mostra botão de upload. Se não, esconde.
+        if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            uploadContainer.classList.remove('hidden');
+        } else {
+            uploadContainer.classList.add('hidden');
+        }
+        
+        // Só carrega os dados depois de logar (porque a Rule bloqueia anônimos)
+        loadDataFromRTDB();
+
     } else {
-        loginBtn.classList.remove('hidden');
-        adminPanel.classList.add('hidden');
+        // Deslogado: mostra muralha, esconde painel
+        loginWall.classList.remove('hidden');
+        appContainer.classList.add('hidden');
     }
 });
 
-loginBtn.addEventListener('click', () => {
-    loginModal.classList.remove('hidden');
-});
-closeModalBtn.addEventListener('click', () => {
-    loginModal.classList.add('hidden');
-});
 doLoginBtn.addEventListener('click', () => {
     const em = document.getElementById('loginEmail').value;
     const pw = document.getElementById('loginPassword').value;
@@ -91,25 +99,25 @@ doLoginBtn.addEventListener('click', () => {
     errEl.textContent = "Validando...";
     auth.signInWithEmailAndPassword(em, pw)
         .then(() => {
-            loginModal.classList.add('hidden');
             errEl.textContent = "";
         })
         .catch(err => {
             errEl.textContent = "Erro: " + err.message;
         });
 });
+
 document.getElementById('logoutBtn').addEventListener('click', () => {
     auth.signOut();
 });
 
-// Load Initial Data from Database (SUPER RÁPIDO)
-window.addEventListener('load', () => {
+// Load Initial Data from Database
+function loadDataFromRTDB() {
     db.ref('relatorio_consolida').once('value')
         .then(snapshot => {
             const data = snapshot.val();
             if (data) {
                 originalJsonData = data;
-                processDataEngine(); // Processa direto sem precisar converter Excel!
+                processDataEngine(); 
             } else {
                 console.log("Banco de dados vazio.");
             }
@@ -117,9 +125,9 @@ window.addEventListener('load', () => {
         .catch(err => {
             console.error("Erro ao puxar dados do banco.", err);
         });
-});
+}
 
-// Upload Excel -> Converter para JSON -> Salvar no Banco
+// Upload Excel -> Higienizar Keys -> Salvar no Banco
 excelUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -128,26 +136,35 @@ excelUpload.addEventListener('change', (e) => {
     const oldText = btnLabel.textContent;
     btnLabel.textContent = "Lendo Excel...";
     
-    // Leitura Local com SheetJS
     const reader = new FileReader();
     reader.onload = (evt) => {
         try {
             const workbook = XLSX.read(evt.target.result, { type: 'binary' });
             const firstSheet = workbook.SheetNames[0];
-            originalJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { raw: false, defval: "" });
+            const rawExcelData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { raw: false, defval: "" });
             
-            // Envia o JSON puro para o banco
+            // SANITIZAÇÃO DE CHAVES (Remover . # $ [ ] que o Firebase odeia)
+            const sanitizedData = rawExcelData.map(row => {
+                const newRow = {};
+                for(let key in row) {
+                    const safeKey = key.replace(/[.#$\[\]]/g, '_');
+                    newRow[safeKey] = row[key];
+                }
+                return newRow;
+            });
+
+            originalJsonData = sanitizedData;
+            
             btnLabel.textContent = "Salvando na Nuvem...";
             db.ref('relatorio_consolida').set(originalJsonData)
                 .then(() => {
                     btnLabel.textContent = oldText;
-                    alert("Dados salvos e atualizados para todos com sucesso!");
+                    alert("Dados salvos! Os clientes já podem ver o gráfico atualizado.");
                     processDataEngine();
                 })
                 .catch(err => {
                     btnLabel.textContent = oldText;
-                    alert("Erro no banco de dados. Você configurou as Rules?");
-                    console.error(err);
+                    alert("Erro no banco de dados: " + err.message);
                 });
         } catch (error) {
             btnLabel.textContent = oldText;
@@ -179,7 +196,7 @@ function processDataEngine() {
             destino: getValFuzzy('destino') || getValFuzzy('cidade'),
             uf: getValFuzzy('uf'),
             transportadora: getValFuzzy('transportadora') || getValFuzzy('transp'),
-            docFrete: getValFuzzy('doc.frete') || getValFuzzy('ct-e'),
+            docFrete: getValFuzzy('doc_frete') || getValFuzzy('ct-e') || getValFuzzy('frete'), // doc_frete sanitizado!
             serieCte: getValFuzzy('série ct-e') || getValFuzzy('serie'),
             prazoEntrega: prazoStr,
             situacaoOriginal: sitOriginal,
