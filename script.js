@@ -824,19 +824,19 @@ if (btnGenerateEmail) {
                     <td bgcolor="#5E17EB" style="background-color: #5E17EB; padding: 25px 30px; border-radius: 8px 8px 0 0;">
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                                <td style="color: #ffffff;">
-                                    <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff !important;">
-                                        <font color="#ffffff">Consolida — Relatório de Performance</font>
+                                <td style="color: #fffffe;">
+                                    <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #fffffe !important;">
+                                        <span style="color: #fffffe;"><font color="#fffffe">[HERWEG] ${transp} - Notas pendentes</font></span>
                                     </h2>
-                                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #ffffff !important;">
-                                        <font color="#ffffff">Farol de entregas por status — ${transp}</font>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #fffffe !important;">
+                                        <span style="color: #fffffe;"><font color="#fffffe">Farol de entregas por status</font></span>
                                     </p>
                                 </td>
-                                <td align="right" width="130">
+                                <td align="right" width="160">
                                     <table cellpadding="8" cellspacing="0" border="0" bgcolor="#ffffff" style="background-color: #ffffff; border-radius: 6px;">
                                         <tr>
                                             <td bgcolor="#ffffff" style="background-color: #ffffff; border-radius: 6px;">
-                                                <img src="https://raw.githubusercontent.com/OtavioMiguelC/dashboard-entregasEO/main/img/Consolida.png" alt="Consolida" width="110" style="display: block; border: none;">
+                                                <img src="https://raw.githubusercontent.com/OtavioMiguelC/dashboard-entregasEO/main/img/Consolida.png" alt="Consolida" width="140" style="display: block; border: none;">
                                             </td>
                                         </tr>
                                     </table>
