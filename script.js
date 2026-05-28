@@ -698,19 +698,25 @@ function renderAdminReports() {
     });
 }
 
-// Exportação com fidelidade 100% (usando Array of Arrays)
+// Exportação com fidelidade 100% nas colunas, mas atualizando a Situação
 exportBtn.addEventListener('click', () => {
     if(filteredData.length === 0) return alert('Não há dados para exportar.');
     
-    // A linha 0 é o cabeçalho original com a exata ordem do Excel!
-    const dataToExport = [originalJsonData[0]];
+    const headers = originalJsonData[0];
+    const dataToExport = [headers];
     
-    // Adiciona as linhas correspondentes aos dados filtrados
+    const headersLower = headers.map(h => String(h).toLowerCase().trim());
+    let idxSit = headersLower.findIndex(h => h.includes('situa'));
+    if (idxSit === -1) idxSit = headersLower.findIndex(h => h.includes('status'));
+    
     filteredData.forEach(d => {
-        dataToExport.push(originalJsonData[d._originalIndex]);
+        const rowCopy = [...originalJsonData[d._originalIndex]];
+        if (idxSit !== -1) {
+            rowCopy[idxSit] = d.situacao;
+        }
+        dataToExport.push(rowCopy);
     });
     
-    // aoa_to_sheet reconstrói perfeitamente a planilha matriz
     const ws = XLSX.utils.aoa_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Relatorio_Filtrado");
@@ -721,11 +727,19 @@ adminExportBtn.addEventListener('click', () => {
     const semPrazoData = filteredData.filter(d => d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo');
     if(semPrazoData.length === 0) return alert('Não há notas "Sem prazo" ou "Entregue sem prazo" neste filtro.');
     
-    // A linha 0 é o cabeçalho original com a exata ordem do Excel!
-    const dataToExport = [originalJsonData[0]];
+    const headers = originalJsonData[0];
+    const dataToExport = [headers];
+    
+    const headersLower = headers.map(h => String(h).toLowerCase().trim());
+    let idxSit = headersLower.findIndex(h => h.includes('situa'));
+    if (idxSit === -1) idxSit = headersLower.findIndex(h => h.includes('status'));
     
     semPrazoData.forEach(d => {
-        dataToExport.push(originalJsonData[d._originalIndex]);
+        const rowCopy = [...originalJsonData[d._originalIndex]];
+        if (idxSit !== -1) {
+            rowCopy[idxSit] = d.situacao;
+        }
+        dataToExport.push(rowCopy);
     });
     
     const ws = XLSX.utils.aoa_to_sheet(dataToExport);
