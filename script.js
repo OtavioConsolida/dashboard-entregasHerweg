@@ -527,10 +527,10 @@ function renderRegionsChart() {
     const stats = {};
     filteredData.forEach(d => {
         if(!d.destino) return;
-        if(d.situacao === 'Em atraso' || d.situacao === 'Entregue em atraso' || d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo' || d.situacao === 'Entregue sem prazo') {
+        if(d.situacao === 'Em atraso' || d.situacao === 'Entregue em atraso' || d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') {
             if(!stats[d.destino]) stats[d.destino] = { emAtraso: 0, entregueAtraso: 0, semPrazo: 0, entSemPrazo: 0 };
             if(d.situacao === 'Em atraso') stats[d.destino].emAtraso++;
-            if(d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') stats[d.destino].semPrazo++;
+            if(d.situacao === 'Sem prazo') stats[d.destino].semPrazo++;
             if(d.situacao === 'Entregue sem prazo') stats[d.destino].entSemPrazo++;
             if(d.situacao === 'Entregue em atraso') stats[d.destino].entregueAtraso++;
         }
@@ -592,7 +592,7 @@ function renderBottlenecksChart() {
         if(!d.transportadora) return;
         if(!stats[d.transportadora]) stats[d.transportadora] = { emAtraso: 0, entregueAtraso: 0, semPrazo: 0, entSemPrazo: 0, noPrazo: 0 };
         if (d.situacao === 'Em atraso') stats[d.transportadora].emAtraso++;
-        if (d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') stats[d.transportadora].semPrazo++;
+        if (d.situacao === 'Sem prazo') stats[d.transportadora].semPrazo++;
         if (d.situacao === 'Entregue sem prazo') stats[d.transportadora].entSemPrazo++;
         if (d.situacao === 'Entregue em atraso') stats[d.transportadora].entregueAtraso++;
         if (d.situacao === 'No prazo') stats[d.transportadora].noPrazo++;
