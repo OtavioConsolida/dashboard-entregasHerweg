@@ -598,7 +598,7 @@ function renderBottlenecksChart() {
     });
 
     const sorted = Object.entries(stats)
-        .sort((a,b) => (b[1].atrasos + b[1].semPrazo + b[1].entSemPrazo) - (a[1].atrasos + a[1].semPrazo + a[1].entSemPrazo))
+        .sort((a,b) => (b[1].emAtraso + b[1].entregueAtraso + b[1].semPrazo + b[1].entSemPrazo) - (a[1].emAtraso + a[1].entregueAtraso + a[1].semPrazo + a[1].entSemPrazo))
         .slice(0, 15);
 
     if (charts.bottlenecks) charts.bottlenecks.destroy();
@@ -612,7 +612,7 @@ function renderBottlenecksChart() {
                 { label: 'Entregue em Atraso', data: sorted.map(i => i[1].entregueAtraso), backgroundColor: '#f97316' },
                 { label: 'Ent. Sem Prazo', data: sorted.map(i => i[1].entSemPrazo), backgroundColor: colors.info },
                 { label: 'Sem Prazo', data: sorted.map(i => i[1].semPrazo), backgroundColor: colors.warning },
-                { label: 'Atrasadas', data: sorted.map(i => i[1].atrasos), backgroundColor: colors.danger }
+                { label: 'Em Atraso', data: sorted.map(i => i[1].emAtraso), backgroundColor: colors.danger }
             ]
         },
         options: {
@@ -633,21 +633,21 @@ function renderRanking() {
     const stats = {};
     filteredData.forEach(d => {
         const t = d.transportadora || 'N/A';
-        if(!stats[t]) stats[t] = { total: 0, atraso: 0, semPrazo: 0, entSemPrazo: 0, noPrazo: 0 };
+        if(!stats[t]) stats[t] = { total: 0, emAtraso: 0, entregueAtraso: 0, semPrazo: 0, entSemPrazo: 0, noPrazo: 0 };
         stats[t].total++;
         if (d.situacao === 'Em atraso') stats[t].emAtraso++;
-        else if (d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') stats[t].semPrazo++;
+        else if (d.situacao === 'Sem prazo') stats[t].semPrazo++;
         else if (d.situacao === 'Entregue sem prazo') stats[t].entSemPrazo++;
         else if (d.situacao === 'Entregue em atraso') stats[t].entregueAtraso++;
         else if (d.situacao === 'No prazo') stats[t].noPrazo++;
     });
 
     const ranking = Object.entries(stats).map(([name, data]) => {
-        const percAtraso = (data.atraso / data.total) * 100;
+        const percAtraso = ((data.emAtraso + data.entregueAtraso) / data.total) * 100;
         return { name, ...data, percAtraso };
     });
 
-    ranking.sort((a, b) => b.percAtraso - a.percAtraso || b.atraso - a.atraso);
+    ranking.sort((a, b) => b.percAtraso - a.percAtraso || (b.emAtraso + b.entregueAtraso) - (a.emAtraso + a.entregueAtraso));
 
     ranking.forEach(r => {
         const tr = document.createElement('tr');
@@ -659,7 +659,8 @@ function renderRanking() {
             <td>${r.name}</td>
             <td>${r.total}</td>
             <td>${r.noPrazo}</td>
-            <td>${r.atraso}</td>
+            <td>${r.emAtraso}</td>
+            <td>${r.entregueAtraso}</td>
             <td>${r.semPrazo}</td>
             <td>${r.entSemPrazo}</td>
             <td>${r.percAtraso.toFixed(1)}%</td>
@@ -674,12 +675,12 @@ function renderAdminReports() {
     
     adminRankingBody.innerHTML = '';
     
-    // Agrupa notas Sem Prazo por Transportadora e Cidade
+    // Agrupa notas Sem Prazo por Transportadora, Cidade e Situação
     const stats = {};
     filteredData.forEach(d => {
         if (d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') {
-            const key = `${d.transportadora || 'N/A'}|${d.destino || 'N/A'}`;
-            if (!stats[key]) stats[key] = { transp: d.transportadora || 'N/A', cidade: d.destino || 'N/A', count: 0 };
+            const key = `${d.transportadora || 'N/A'}|${d.destino || 'N/A'}|${d.situacao}`;
+            if (!stats[key]) stats[key] = { transp: d.transportadora || 'N/A', cidade: d.destino || 'N/A', situacao: d.situacao, count: 0 };
             stats[key].count++;
         }
     });
@@ -688,14 +689,14 @@ function renderAdminReports() {
 
     ranking.forEach(r => {
         const tr = document.createElement('tr');
-        let statusClass = 'status-warning';
-        if (r.count > 10) statusClass = 'status-critical';
+        let statusClass = r.situacao === 'Entregue sem prazo' ? 'bg-blue-100 text-blue-800' : 'status-warning';
+        if (r.count > 10 && r.situacao === 'Sem prazo') statusClass = 'status-critical';
         
         tr.innerHTML = `
             <td>${r.transp}</td>
             <td>${r.cidade}</td>
             <td><strong>${r.count}</strong></td>
-            <td><span class="status-badge ${statusClass}">${r.situacao || r.status || 'No prazo'}</span></td>
+            <td><span class="status-badge ${statusClass}">${r.situacao}</span></td>
         `;
         adminRankingBody.appendChild(tr);
     });
