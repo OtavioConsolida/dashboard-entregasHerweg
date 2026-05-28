@@ -836,7 +836,7 @@ if (btnGenerateEmail) {
                                     <div style="margin: 5px 0 0 0; font-size: 14px; color: #718096;">Farol de entregas por status — ${transp}</div>
                                 </td>
                                 <td align="right" width="160" valign="middle">
-                                    <img src="https://raw.githubusercontent.com/OtavioMiguelC/dashboard-entregasEO/main/img/Consolida.png" alt="Consolida" width="150" style="display: block; border: none;">
+                                    <img src="https://raw.githubusercontent.com/OtavioConsolida/dashboard-entregasHerweg/main/img/Consolida.png" alt="Consolida" width="150" style="display: block; border: none;">
                                 </td>
                             </tr>
                         </table>
