@@ -103,19 +103,19 @@ code = code.replace("d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem 
 code = code.replace("alert('Não há notas \"Sem prazo\" ou \"Entregue sem prazo\" neste filtro.')", "alert('Não há notas \"Sem prazo\" neste filtro.')")
 
 # Checkboxes
-code = code.replace(\"<input type='checkbox' id='chkAtrasados' class='mr-2' checked>\", \"<input type='checkbox' id='chkEmAtraso' class='mr-2' checked>\")
-code = code.replace(\"<span>NFs em Atraso</span>\", \"<span>NFs Em Atraso</span>\")
-code = code.replace(\"<input type='checkbox' id='chkEntregueSemPrazo' class='mr-2'>\", \"<input type='checkbox' id='chkEntregueEmAtraso' class='mr-2'>\")
-code = code.replace(\"<span>Entregues sem Prazo</span>\", \"<span>Entregues em Atraso</span>\")
+code = code.replace("<input type='checkbox' id='chkAtrasados' class='mr-2' checked>", "<input type='checkbox' id='chkEmAtraso' class='mr-2' checked>")
+code = code.replace("<span>NFs em Atraso</span>", "<span>NFs Em Atraso</span>")
+code = code.replace("<input type='checkbox' id='chkEntregueSemPrazo' class='mr-2'>", "<input type='checkbox' id='chkEntregueEmAtraso' class='mr-2'>")
+code = code.replace("<span>Entregues sem Prazo</span>", "<span>Entregues em Atraso</span>")
 
 # Email modal
-code = code.replace(\"const chkAtrasados = document.getElementById('chkAtrasados').checked;\", \"const chkEmAtraso = document.getElementById('chkEmAtraso').checked;\")
-code = code.replace(\"const chkEntregueSemPrazo = document.getElementById('chkEntregueSemPrazo').checked;\", \"const chkEntregueEmAtraso = document.getElementById('chkEntregueEmAtraso').checked;\")
-code = code.replace(\"if (chkAtrasados) allowedStatuses.push('Atrasado');\", \"if (chkEmAtraso) allowedStatuses.push('Em atraso');\")
-code = code.replace(\"if (chkEntregueSemPrazo) allowedStatuses.push('Entregue sem prazo');\", \"if (chkEntregueEmAtraso) allowedStatuses.push('Entregue em atraso');\")
-code = code.replace(\"const countAtrasados = notasEmail.filter(n => n.situacao === 'Atrasado').length;\", \"const countEmAtraso = notasEmail.filter(n => n.situacao === 'Em atraso').length;\")
-code = code.replace(\"const countEntSemPrazo = notasEmail.filter(n => n.situacao === 'Entregue sem prazo').length;\", \"const countEntregueAtraso = notasEmail.filter(n => n.situacao === 'Entregue em atraso').length;\")
-code = code.replace(\"if (countAtrasados > 0) {\", \"if (countEmAtraso > 0) {\")
+code = code.replace("const chkAtrasados = document.getElementById('chkAtrasados').checked;", "const chkEmAtraso = document.getElementById('chkEmAtraso').checked;")
+code = code.replace("const chkEntregueSemPrazo = document.getElementById('chkEntregueSemPrazo').checked;", "const chkEntregueEmAtraso = document.getElementById('chkEntregueEmAtraso').checked;")
+code = code.replace("if (chkAtrasados) allowedStatuses.push('Atrasado');", "if (chkEmAtraso) allowedStatuses.push('Em atraso');")
+code = code.replace("if (chkEntregueSemPrazo) allowedStatuses.push('Entregue sem prazo');", "if (chkEntregueEmAtraso) allowedStatuses.push('Entregue em atraso');")
+code = code.replace("const countAtrasados = notasEmail.filter(n => n.situacao === 'Atrasado').length;", "const countEmAtraso = notasEmail.filter(n => n.situacao === 'Em atraso').length;")
+code = code.replace("const countEntSemPrazo = notasEmail.filter(n => n.situacao === 'Entregue sem prazo').length;", "const countEntregueAtraso = notasEmail.filter(n => n.situacao === 'Entregue em atraso').length;")
+code = code.replace("if (countAtrasados > 0) {", "if (countEmAtraso > 0) {")
 
 # These were inside template literals, we must be careful
 code = re.sub(r'Houve <strong>\$\{countAtrasados\} notas com atraso</strong>', 'Houve <strong>${countEmAtraso} notas em atraso</strong>', code)
@@ -125,9 +125,9 @@ code = re.sub(r'if \(n\.situacao === \'Atrasado\'\) \{', 'if (n.situacao === \\\
 code = re.sub(r'\} else if \(n\.situacao === \'Entregue sem prazo\'\) \{', '} else if (n.situacao === \\\'Entregue em atraso\\\') {', code)
 
 # Badges and UI updates
-code = code.replace(\"if (r.status === 'Atrasado' || r.status === 'Em atraso' || r.status === 'Entregue em atraso')\", \"if (r.status === 'Em atraso' || r.status === 'Entregue em atraso')\")
-code = code.replace(\"if (r.status === 'Aguardando') statusClass = 'bg-yellow-100 text-yellow-800';\", \"\")
-code = code.replace(\"<td><span class=\\\"status-badge ${statusClass}\\\">Aguardando</span></td>\", \"<td><span class=\\\"status-badge ${statusClass}\\\">${r.situacao || r.status || 'No prazo'}</span></td>\")
+code = code.replace("if (r.status === 'Atrasado' || r.status === 'Em atraso' || r.status === 'Entregue em atraso')", "if (r.status === 'Em atraso' || r.status === 'Entregue em atraso')")
+code = code.replace("if (r.status === 'Aguardando') statusClass = 'bg-yellow-100 text-yellow-800';", "")
+code = code.replace("<td><span class=\"status-badge ${statusClass}\">Aguardando</span></td>", "<td><span class=\"status-badge ${statusClass}\">${r.situacao || r.status || 'No prazo'}</span></td>")
 
 with open('script.js', 'w', encoding='utf-8') as f:
     f.write(code)

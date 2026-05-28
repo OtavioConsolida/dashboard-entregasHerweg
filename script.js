@@ -938,9 +938,9 @@ if (btnGenerateEmail) {
             let badgeBg = "#fef3c7";
             let textColor = "#b45309";
             
-            if (n.situacao === \'Em atraso\') {
+            if (n.situacao === 'Em atraso') {
                 badgeColor = "#ef4444"; badgeBg = "#fee2e2"; textColor = "#b91c1c";
-            } else if (n.situacao === \'Entregue em atraso\') {
+            } else if (n.situacao === 'Entregue em atraso') {
                 badgeColor = "#3b82f6"; badgeBg = "#dbeafe"; textColor = "#1d4ed8";
             }
             
