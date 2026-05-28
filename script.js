@@ -836,7 +836,7 @@ if (btnGenerateEmail) {
         const countEntSemPrazo = notasEmail.filter(n => n.situacao === 'Entregue sem prazo').length;
 
         let html = `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #333333; max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #333333; max-width: 1000px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
             
             <!-- Barra decorativa roxa -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -964,7 +964,7 @@ if (btnGenerateEmail) {
                             <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; text-align: center;">
                                 <table cellpadding="4" cellspacing="0" border="0" bgcolor="${badgeBg}" style="background-color: ${badgeBg}; margin: 0 auto; border-radius: 12px; border: 1px solid ${badgeColor};">
                                     <tr>
-                                        <td bgcolor="${badgeBg}" style="background-color: ${badgeBg}; color: ${textColor}; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 12px;">
+                                        <td bgcolor="${badgeBg}" style="background-color: ${badgeBg}; color: ${textColor}; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; border-radius: 12px; text-align: center;">
                                             ${n.situacao}
                                         </td>
                                     </tr>
