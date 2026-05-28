@@ -56,16 +56,14 @@ function resolveStatusLogico(prazoStr, dataEntregaStr, situacaoOriginal) {
     const temPrazo = prazoDt && !isNaN(prazoDt);
     const temEntrega = entregaDt && !isNaN(entregaDt);
 
-    if (!temPrazo) {
-        return 'Sem prazo';
-    }
-
     if (temEntrega) {
+        if (!temPrazo) return 'Entregue sem prazo';
         entregaDt.setHours(0,0,0,0);
         prazoDt.setHours(0,0,0,0);
         if (entregaDt > prazoDt) return 'Entregue em atraso';
         else return 'No prazo';
     } else {
+        if (!temPrazo) return 'Sem prazo';
         const hoje = new Date();
         hoje.setHours(0,0,0,0);
         prazoDt.setHours(0,0,0,0);
@@ -491,7 +489,7 @@ function renderSLAChart() {
     const ctx = document.getElementById('slaChart').getContext('2d');
     const colors = getChartColors();
     
-    let noPrazo = 0; let emAtraso = 0; let entregueAtraso = 0; let semPrazo = 0;
+    let noPrazo = 0; let emAtraso = 0; let entregueAtraso = 0; let semPrazo = 0; let entSemPrazo = 0;
 
     filteredData.forEach(d => {
         if (d.situacao === 'No prazo') noPrazo++;
@@ -505,10 +503,10 @@ function renderSLAChart() {
     charts.sla = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['No Prazo', 'Em Atraso', 'Sem Prazo', 'Entregue em Atraso'],
+            labels: ['No Prazo', 'Em Atraso', 'Entregue em Atraso', 'Sem Prazo', 'Entregue s/ Prazo'],
             datasets: [{
-                data: [noPrazo, emAtraso, semPrazo, entregueAtraso],
-                backgroundColor: [colors.success, colors.danger, colors.warning, colors.info],
+                data: [noPrazo, emAtraso, entregueAtraso, semPrazo, entSemPrazo],
+                backgroundColor: [colors.success, colors.danger, '#f97316', colors.warning, colors.info],
                 borderWidth: 0
             }]
         },
@@ -526,10 +524,11 @@ function renderRegionsChart() {
     const stats = {};
     filteredData.forEach(d => {
         if(!d.destino) return;
-        if(d.situacao === 'Em atraso' || d.situacao === 'Entregue em atraso' || d.situacao === 'Sem prazo') {
-            if(!stats[d.destino]) stats[d.destino] = { emAtraso: 0, semPrazo: 0, entregueAtraso: 0 };
+        if(d.situacao === 'Em atraso' || d.situacao === 'Entregue em atraso' || d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo' || d.situacao === 'Entregue sem prazo') {
+            if(!stats[d.destino]) stats[d.destino] = { emAtraso: 0, entregueAtraso: 0, semPrazo: 0, entSemPrazo: 0 };
             if(d.situacao === 'Em atraso') stats[d.destino].emAtraso++;
-            if(d.situacao === 'Sem prazo') stats[d.destino].semPrazo++;
+            if(d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') stats[d.destino].semPrazo++;
+            if(d.situacao === 'Entregue sem prazo') stats[d.destino].entSemPrazo++;
             if(d.situacao === 'Entregue em atraso') stats[d.destino].entregueAtraso++;
         }
     });
@@ -560,6 +559,11 @@ function renderRegionsChart() {
                 {
                     label: 'Entregue em Atraso',
                     data: sorted.map(i => i[1].entregueAtraso),
+                    backgroundColor: '#f97316'
+                },
+                {
+                    label: 'Entregue s/ Prazo',
+                    data: sorted.map(i => i[1].entSemPrazo),
                     backgroundColor: colors.info,
                     borderRadius: 2
                 }
@@ -583,9 +587,10 @@ function renderBottlenecksChart() {
     const stats = {};
     filteredData.forEach(d => {
         if(!d.transportadora) return;
-        if(!stats[d.transportadora]) stats[d.transportadora] = { emAtraso: 0, semPrazo: 0, entregueAtraso: 0, noPrazo: 0 };
+        if(!stats[d.transportadora]) stats[d.transportadora] = { emAtraso: 0, entregueAtraso: 0, semPrazo: 0, entSemPrazo: 0, noPrazo: 0 };
         if (d.situacao === 'Em atraso') stats[d.transportadora].emAtraso++;
-        if (d.situacao === 'Sem prazo') stats[d.transportadora].semPrazo++;
+        if (d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') stats[d.transportadora].semPrazo++;
+        if (d.situacao === 'Entregue sem prazo') stats[d.transportadora].entSemPrazo++;
         if (d.situacao === 'Entregue em atraso') stats[d.transportadora].entregueAtraso++;
         if (d.situacao === 'No prazo') stats[d.transportadora].noPrazo++;
     });
@@ -602,7 +607,8 @@ function renderBottlenecksChart() {
             labels: sorted.map(i => i[0].substring(0, 20) + '...'),
             datasets: [
                 { label: 'No Prazo', data: sorted.map(i => i[1].noPrazo), backgroundColor: colors.success },
-                { label: 'Entregue em Atraso', data: sorted.map(i => i[1].entregueAtraso), backgroundColor: colors.info },
+                { label: 'Entregue em Atraso', data: sorted.map(i => i[1].entregueAtraso), backgroundColor: '#f97316' },
+                { label: 'Ent. Sem Prazo', data: sorted.map(i => i[1].entSemPrazo), backgroundColor: colors.info },
                 { label: 'Sem Prazo', data: sorted.map(i => i[1].semPrazo), backgroundColor: colors.warning },
                 { label: 'Atrasadas', data: sorted.map(i => i[1].atrasos), backgroundColor: colors.danger }
             ]
@@ -628,7 +634,8 @@ function renderRanking() {
         if(!stats[t]) stats[t] = { total: 0, atraso: 0, semPrazo: 0, entSemPrazo: 0, noPrazo: 0 };
         stats[t].total++;
         if (d.situacao === 'Em atraso') stats[t].emAtraso++;
-        else if (d.situacao === 'Sem prazo') stats[t].semPrazo++;
+        else if (d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') stats[t].semPrazo++;
+        else if (d.situacao === 'Entregue sem prazo') stats[t].entSemPrazo++;
         else if (d.situacao === 'Entregue em atraso') stats[t].entregueAtraso++;
         else if (d.situacao === 'No prazo') stats[t].noPrazo++;
     });
@@ -668,7 +675,7 @@ function renderAdminReports() {
     // Agrupa notas Sem Prazo por Transportadora e Cidade
     const stats = {};
     filteredData.forEach(d => {
-        if (d.situacao === 'Sem prazo') {
+        if (d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo') {
             const key = `${d.transportadora || 'N/A'}|${d.destino || 'N/A'}`;
             if (!stats[key]) stats[key] = { transp: d.transportadora || 'N/A', cidade: d.destino || 'N/A', count: 0 };
             stats[key].count++;
@@ -718,8 +725,8 @@ exportBtn.addEventListener('click', () => {
 });
 
 adminExportBtn.addEventListener('click', () => {
-    const semPrazoData = filteredData.filter(d => d.situacao === 'Sem prazo');
-    if(semPrazoData.length === 0) return alert('Não há notas "Sem prazo" neste filtro.');
+    const semPrazoData = filteredData.filter(d => d.situacao === 'Sem prazo' || d.situacao === 'Entregue sem prazo');
+    if(semPrazoData.length === 0) return alert('Não há notas "Sem prazo" ou "Entregue sem prazo" neste filtro.');
     
     const headers = originalJsonData[0];
     const dataToExport = [headers];
@@ -802,11 +809,13 @@ if (btnGenerateEmail) {
         const chkEmAtraso = document.getElementById('chkEmAtraso').checked;
         const chkSemPrazo = document.getElementById('chkSemPrazo').checked;
         const chkEntregueEmAtraso = document.getElementById('chkEntregueEmAtraso').checked;
+        const chkEntregueSemPrazo = document.getElementById('chkEntregueSemPrazo').checked;
         
         const allowedStatuses = [];
         if (chkEmAtraso) allowedStatuses.push('Em atraso');
         if (chkSemPrazo) allowedStatuses.push('Sem prazo');
         if (chkEntregueEmAtraso) allowedStatuses.push('Entregue em atraso');
+        if (chkEntregueSemPrazo) allowedStatuses.push('Entregue sem prazo');
         
         if (allowedStatuses.length === 0) return alert("Selecione pelo menos um status para cobrar.");
 
@@ -822,6 +831,7 @@ if (btnGenerateEmail) {
         const countEmAtraso = notasEmail.filter(n => n.situacao === 'Em atraso').length;
         const countSemPrazo = notasEmail.filter(n => n.situacao === 'Sem prazo').length;
         const countEntregueAtraso = notasEmail.filter(n => n.situacao === 'Entregue em atraso').length;
+        const countEntSemPrazo = notasEmail.filter(n => n.situacao === 'Entregue sem prazo').length;
 
         let html = `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #333333; max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
