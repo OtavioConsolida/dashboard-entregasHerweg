@@ -229,6 +229,7 @@ function processDataEngine() {
     
     const idxSerieCte = getIdx('série ct-e') !== -1 ? getIdx('série ct-e') : getIdx('serie');
     const idxEntrega = getIdx('data entrega') !== -1 ? getIdx('data entrega') : getIdx('entrega');
+    const idxRemetente = getIdx('remetente');
 
     rawData = [];
     
@@ -251,6 +252,7 @@ function processDataEngine() {
             transportadora: idxTransp !== -1 ? row[idxTransp] : null,
             docFrete: idxCte !== -1 ? row[idxCte] : null,
             serieCte: idxSerieCte !== -1 ? row[idxSerieCte] : null,
+            remetente: idxRemetente !== -1 ? row[idxRemetente] : null,
             prazoEntrega: prazoStr,
             dataEntrega: entregaStr,
             situacaoOriginal: sitOriginal,
@@ -925,6 +927,7 @@ if (btnGenerateEmail) {
                         <tr>
                             <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568; font-weight: 600;">NF-e</th>
                             <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568; font-weight: 600;">CT-e</th>
+                            <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568; font-weight: 600;">Remetente</th>
                             <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568; font-weight: 600;">Destino</th>
                             <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568; font-weight: 600;">Previsão</th>
                             <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-align: center; color: #4a5568; font-weight: 600;">Status</th>
@@ -955,6 +958,7 @@ if (btnGenerateEmail) {
                         <tr>
                             <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; color: #1a202c; font-weight: 500;">${n.nfe || '-'}</td>
                             <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; color: #4a5568;">${n.docFrete || '-'}</td>
+                            <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; color: #4a5568;">${n.remetente || '-'}</td>
                             <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; color: #4a5568;">${n.destino || '-'}</td>
                             <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; color: #4a5568;">${prazoCurto}</td>
                             <td style="padding: 12px 8px; border-bottom: 1px solid #edf2f7; text-align: center;">
