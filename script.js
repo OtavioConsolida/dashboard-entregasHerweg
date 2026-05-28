@@ -497,7 +497,8 @@ function renderSLAChart() {
         if (d.situacao === 'No prazo') noPrazo++;
         else if (d.situacao === 'Em atraso') emAtraso++;
         else if (d.situacao === 'Entregue em atraso') entregueAtraso++;
-        else semPrazo++; 
+        else if (d.situacao === 'Sem prazo') semPrazo++; 
+        else if (d.situacao === 'Entregue sem prazo') entSemPrazo++;
     });
 
     if (charts.sla) charts.sla.destroy();
@@ -689,14 +690,20 @@ function renderAdminReports() {
 
     ranking.forEach(r => {
         const tr = document.createElement('tr');
-        let statusClass = r.situacao === 'Entregue sem prazo' ? 'bg-blue-100 text-blue-800' : 'status-warning';
-        if (r.count > 10 && r.situacao === 'Sem prazo') statusClass = 'status-critical';
+        let statusClass = 'status-warning';
+        let extraStyle = '';
+        if (r.count > 10 && r.situacao === 'Sem prazo') {
+            statusClass = 'status-critical';
+        } else if (r.situacao === 'Entregue sem prazo') {
+            statusClass = '';
+            extraStyle = 'background-color: #dbeafe; color: #1e40af;'; // Azul
+        }
         
         tr.innerHTML = `
             <td>${r.transp}</td>
             <td>${r.cidade}</td>
             <td><strong>${r.count}</strong></td>
-            <td><span class="status-badge ${statusClass}">${r.situacao}</span></td>
+            <td><span class="status-badge ${statusClass}" style="${extraStyle}">${r.situacao}</span></td>
         `;
         adminRankingBody.appendChild(tr);
     });
