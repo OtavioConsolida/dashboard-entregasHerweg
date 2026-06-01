@@ -804,6 +804,41 @@ function populateEmailTransp() {
     }
 }
 
+const carrierEmails = {
+    "EXPRESSO PRINCESA DOS CAMPOS SA": "atendimento.encomendas@princesadoscampos.com.br; sac2@lmlogisticas.com.br; Felipe.postai@princesadoscampos.com.br",
+    "SCHREIBER LOGISTICA LTDA": "rafael@sbr.log.br; sac.tim@sbr.log.br",
+    "EXPRESSO SAO MIGUEL LTDA": "timbo.fm@expressosaomiguel.com.br; timbo.fm.sol@expressosaomiguel.com.br",
+    "JOSE OSVALDO DE OLIVEIRA TRANSOLIVEIRA": "sac2.bnu@transoliveira.com.br; comercial2.bnu@transoliveira.com.br",
+    "TRANS SD TRANSPORTES RODOVIÁRIOS LTDA": "logistica3@transsd.log.br; logistica@transsd.log.br",
+    "PATRUS TRANSPORTES URGENTES LTDA": "atendimento@patrus.com.br; bruno.pereira@patrus.com.br",
+    "JAMEF TRANSPORTES LTDA": "otavioburak@cwb.jamef.com.br; pamela.zabel@bnu.jamef.com.br",
+    "XAVIER AMORIM TRANSPORTES E LOGISTICA LTDA": "pendencia@aguiaramorim.com.br",
+    "TW TRANSPORTES LTDA": "tais.santos@twtransportes.com.br; blu.ocorrencias1@twtransportes.com.br",
+    "BRASPRESS TRANSPORTES URGENTES LTDA": "bnu.vendas03@braspress.com; bnu.sac06@braspress.com; bnu.sac08@braspress.com"
+};
+
+const emailSelectTranspEl = document.getElementById('emailSelectTransp');
+const emailDestinosEl = document.getElementById('emailDestinos');
+
+if (emailSelectTranspEl && emailDestinosEl) {
+    emailSelectTranspEl.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (!val) {
+            emailDestinosEl.value = "";
+            return;
+        }
+        
+        const normVal = val.toUpperCase().replace(/\s+/g, ' ').trim();
+        let emails = "compras@herweg.com.br";
+        
+        if (carrierEmails[normVal]) {
+            emails = carrierEmails[normVal] + "; " + emails;
+        }
+        
+        emailDestinosEl.value = emails;
+    });
+}
+
 const btnGenerateEmail = document.getElementById('btnGenerateEmail');
 const btnCopyAndOpen = document.getElementById('btnCopyAndOpen');
 const emailHtmlContainer = document.getElementById('emailHtmlContainer');
