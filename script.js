@@ -39,8 +39,16 @@ const ADMIN_EMAIL = "otavio@oconsolida.com";
 
 // Helper para parse de data
 function parseDateBR(dateStr) {
-    if(!dateStr) return null;
+    if(!dateStr && dateStr !== 0) return null;
     if (dateStr instanceof Date) return dateStr;
+    
+    if (!isNaN(dateStr) && Number(dateStr) > 30000) {
+        const dateNum = Number(dateStr);
+        const jsDate = new Date(Math.round((dateNum - 25569) * 86400 * 1000));
+        jsDate.setMinutes(jsDate.getMinutes() + jsDate.getTimezoneOffset());
+        return jsDate;
+    }
+    
     const parts = String(dateStr).split(/[- :\/T]/);
     if(parts.length >= 3) {
         if(parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]);
@@ -992,6 +1000,12 @@ if (btnGenerateEmail) {
             
             const formatShortDate = (str) => {
                 if (!str || str === '-') return '-';
+                const d = parseDateBR(str);
+                if (d && !isNaN(d)) {
+                    const dia = String(d.getDate()).padStart(2, '0');
+                    const mes = String(d.getMonth() + 1).padStart(2, '0');
+                    return `${dia}/${mes}`;
+                }
                 return String(str).split(' ')[0];
             };
             
